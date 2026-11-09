@@ -212,6 +212,12 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="同时显示原文" />
+
+        <CheckBox
+            android:id="@+id/furigana"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/furigana" />
         <TextView style="@style/Label" android:text="同时显示几句字幕" />
 
         <RadioGroup

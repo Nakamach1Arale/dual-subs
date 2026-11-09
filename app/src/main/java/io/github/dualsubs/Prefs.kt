@@ -67,6 +67,8 @@ data class Settings(
     val audioSource: AudioSource,
     /** Show the recognized original-language line above the translation. */
     val showOriginal: Boolean,
+    /** Kana readings above kanji in Japanese original text. */
+    val furigana: Boolean,
     /** How many subtitle sentences are on screen at once (1–3). */
     val displayLines: Int,
     /** Seconds a sentence stays after its translation arrives; 0 = until pushed out. */
@@ -97,6 +99,7 @@ object Prefs {
             audioSource = runCatching { AudioSource.valueOf(p.getString("audioSource", "PLAYBACK")!!) }
                 .getOrDefault(AudioSource.PLAYBACK),
             showOriginal = p.getBoolean("showOriginal", true),
+            furigana = p.getBoolean("furigana", true),
             displayLines = p.getInt("displayLines", 2).coerceIn(1, 3),
             holdSeconds = p.getInt("holdSeconds", 15).coerceAtLeast(0),
             fontScale = p.getFloat("fontScale", 1.0f),
@@ -119,6 +122,7 @@ object Prefs {
             .putString("targetLang", s.targetLang.trim())
             .putString("audioSource", s.audioSource.name)
             .putBoolean("showOriginal", s.showOriginal)
+            .putBoolean("furigana", s.furigana)
             .putInt("displayLines", s.displayLines.coerceIn(1, 3))
             .putInt("holdSeconds", s.holdSeconds.coerceAtLeast(0))
             .putFloat("fontScale", s.fontScale)
@@ -128,5 +132,10 @@ object Prefs {
     fun saveFontScale(ctx: Context, scale: Float) {
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit()
             .putFloat("fontScale", scale).apply()
+    }
+
+    fun saveFurigana(ctx: Context, on: Boolean) {
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit()
+            .putBoolean("furigana", on).apply()
     }
 }

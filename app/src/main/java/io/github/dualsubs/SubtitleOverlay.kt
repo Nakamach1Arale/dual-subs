@@ -36,6 +36,10 @@ class SubtitleOverlay(
     private val displayLines: Int,
     private val holdSeconds: Int,
     private var fontScale: Float,
+    /** Kana readings above kanji in the original text (Japanese only). */
+    private var furigana: Boolean,
+    /** Spoken-language code; furigana is only offered for "ja" and auto-detect (""). */
+    private val sourceLang: String,
     private val onStopRequested: () -> Unit,
 ) {
     class Line(val original: String) {
@@ -43,7 +47,11 @@ class SubtitleOverlay(
             internal set
         /** When the translation arrived (elapsedRealtime), or 0 while still translating. */
         internal var settledAt = 0L
+        /** [original] with furigana spans, built once the dictionary is loaded. */
+        internal var annotated: CharSequence? = null
     }
+
+    private val furiganaAvailable = sourceLang == "ja" || sourceLang == ""
 
     private val wm = ctx.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val main = Handler(Looper.getMainLooper())
@@ -90,6 +98,14 @@ class SubtitleOverlay(
         toolbar.addView(toolButton("A−") { setFontScale(fontScale - 0.1f) })
         toolbar.addView(toolButton("A+") { setFontScale(fontScale + 0.1f) })
         toolbar.addView(toolButton("原文") { showOriginal = !showOriginal; render() })
+        if (furiganaAvailable) {
+            toolbar.addView(toolButton("注音") {
+                furigana = !furigana
+                Prefs.saveFurigana(ctx, furigana)
+                if (furigana) loadFurigana()
+                render()
+            })
+        }
         toolbar.addView(toolButton("清空") { lines.clear(); liveText = ""; render() })
         toolbar.addView(toolButton("✕") { onStopRequested() })
         toolbar.visibility = View.GONE
@@ -107,8 +123,24 @@ class SubtitleOverlay(
         if (attached) return
         wm.addView(root, params)
         attached = true
+        if (furigana && furiganaAvailable) loadFurigana()
         render()
         main.postDelayed(tick, 1000)
+    }
+
+    /** Loads the furigana dictionary in the background and redraws once it is ready. */
+    private fun loadFurigana() {
+        Furigana.warmUp { main.post { render() } }
+    }
+
+    /** The original text, with furigana when it is on and the text is Japanese. */
+    private fun original(text: String, line: Line? = null): CharSequence {
+        if (!furigana || !furiganaAvailable) return text
+        if (sourceLang == "" && !Furigana.containsKana(text)) return text  // auto-detect: skip Chinese
+        line?.annotated?.let { return it }
+        val annotated = Furigana.annotate(text) ?: return text  // dictionary still loading
+        line?.annotated = annotated
+        return annotated
     }
 
     fun hide() {
@@ -187,7 +219,7 @@ class SubtitleOverlay(
         status?.let { body.addView(text(it, 13f, Color.rgb(255, 170, 120))) }
 
         for (line in lines) {
-            if (showOriginal) body.addView(text(line.original, 15f, Color.WHITE))
+            if (showOriginal) body.addView(text(original(line.original, line), 15f, Color.WHITE))
             val zh = line.zh
             when {
                 zh == null -> body.addView(text("…", 18f, YELLOW))
@@ -196,7 +228,7 @@ class SubtitleOverlay(
         }
 
         if (liveText.isNotBlank()) {
-            val sb = SpannableStringBuilder("▸ ").append(liveText)
+            val sb = SpannableStringBuilder("▸ ").append(original(liveText))
             sb.setSpan(ForegroundColorSpan(Color.rgb(170, 170, 170)), 0, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             body.addView(text(sb, 14f, Color.LTGRAY))
         }

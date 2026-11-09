@@ -34,6 +34,7 @@ class MainActivity : Activity() {
     private lateinit var targetLang: Spinner
     private lateinit var source: RadioGroup
     private lateinit var showOriginal: CheckBox
+    private lateinit var furigana: CheckBox
     private lateinit var sourceLang: Spinner
     private lateinit var modelList: LinearLayout
     private var selectedModel: String = ModelCatalog.all.first().id
@@ -61,6 +62,7 @@ class MainActivity : Activity() {
         targetLang.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, TargetLanguages.all)
         source = findViewById(R.id.source)
         showOriginal = findViewById(R.id.showOriginal)
+        furigana = findViewById(R.id.furigana)
         sourceLang = findViewById(R.id.sourceLang)
         sourceLang.adapter = ArrayAdapter(
             this, android.R.layout.simple_spinner_dropdown_item, SourceLanguages.all.map { it.label },
@@ -115,6 +117,7 @@ class MainActivity : Activity() {
         targetLang.setSelection(TargetLanguages.all.indexOf(s.targetLang).coerceAtLeast(0))
         source.check(if (s.audioSource == AudioSource.PLAYBACK) R.id.sourcePlayback else R.id.sourceMic)
         showOriginal.isChecked = s.showOriginal
+        furigana.isChecked = s.furigana
         lines.check(when (s.displayLines) { 1 -> R.id.lines1; 3 -> R.id.lines3; else -> R.id.lines2 })
         holdSeconds.setText(s.holdSeconds.toString())
         updateEngineGroups()
@@ -141,6 +144,7 @@ class MainActivity : Activity() {
             targetLang = TargetLanguages.all.getOrNull(targetLang.selectedItemPosition) ?: TargetLanguages.all.first(),
             audioSource = if (source.checkedRadioButtonId == R.id.sourceMic) AudioSource.MIC else AudioSource.PLAYBACK,
             showOriginal = showOriginal.isChecked,
+            furigana = furigana.isChecked,
             displayLines = when (lines.checkedRadioButtonId) { R.id.lines1 -> 1; R.id.lines3 -> 3; else -> 2 },
             holdSeconds = holdSeconds.text.toString().trim().toIntOrNull() ?: 15,
             fontScale = old.fontScale,

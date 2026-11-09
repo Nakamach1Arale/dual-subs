@@ -3,6 +3,7 @@
     <string name="app_name">双语实时字幕</string>
     <string name="source_playback">机内音源\n<small>手机正在播放的声音（推荐）</small></string>
     <string name="source_mic">外部音源\n<small>麦克风收音，机内音源抓不到声音时用</small></string>
+    <string name="furigana">日语原文汉字注音\n<small>在汉字上方标假名；读音来自词典，偶尔会标错</small></string>
 
     <style name="Section">
         <item name="android:layout_width">match_parent</item>

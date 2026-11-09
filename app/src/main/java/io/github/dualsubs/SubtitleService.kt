@@ -88,6 +88,8 @@ class SubtitleService : Service() {
             displayLines = settings.displayLines,
             holdSeconds = settings.holdSeconds,
             fontScale = settings.fontScale,
+            furigana = settings.furigana,
+            sourceLang = settings.sourceLang,
             onStopRequested = { stopSelf() },
         ).also { it.show() }
 
