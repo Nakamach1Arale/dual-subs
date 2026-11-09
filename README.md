@@ -18,6 +18,10 @@ Real-time bilingual subtitles for any video or live stream on Android: captures 
 - 只录声音，不录画面，所以视频是否有 DRM 都不影响。
 - 需要 Android 10 以上的 ARM 手机。
 
+## 下载
+
+到 [Releases](https://github.com/Nakamach1Arale/dual-subs/releases) 下载最新的 APK，在手机上直接安装。也可以按下面的“构建”自己编译。
+
 ## 语音识别
 
 | 引擎 | 说明 |
@@ -65,7 +69,7 @@ Real-time bilingual subtitles for any video or live stream on Android: captures 
 
 第一次构建时会自动从 GitHub Releases 下载 sherpa-onnx 的 AAR，放到 `app/libs/`。生成的 APK 在 `app/build/outputs/apk/debug/app-debug.apk`。
 
-依赖优先从阿里云 Maven 镜像下载，然后才是官方仓库（见 `settings.gradle.kts`），所以在中国大陆也能直接构建。Windows 上也可以运行 `build.cmd`。
+依赖优先从阿里云 Maven 镜像下载，然后才是官方仓库（见 `settings.gradle.kts`），所以在中国大陆也能直接构建。Windows 上也可以运行 `build.cmd`（调试版）或 `build.cmd release`（发布版，生成 `app/build/outputs/apk/release/app-release.apk`）。
 
 ## 使用
 
