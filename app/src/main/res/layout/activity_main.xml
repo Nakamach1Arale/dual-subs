@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="双语实时字幕"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="捕获手机正在播放的声音 → 语音识别（本地离线或 Soniox）→ AI 翻译 → 悬浮字幕。任何视频、直播 App 或网页都能用。"
+            android:textSize="13sp" />
+
+        <!-- Speech recognition -->
+        <TextView style="@style/Section" android:text="语音识别" />
+
+        <TextView style="@style/Label" android:text="识别语言" />
+
+        <Spinner
+            android:id="@+id/sourceLang"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView style="@style/Label" android:text="识别引擎" />
+
+        <RadioGroup
+            android:id="@+id/stt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/sttLocal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="本地离线（免费，不需要 key，需先下载模型）" />
+
+            <RadioButton
+                android:id="@+id/sttSoniox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Soniox 云端（更快更准，按时长付费）" />
+        </RadioGroup>
+
+        <LinearLayout
+            android:id="@+id/localGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView style="@style/Label" android:text="识别模型（选一个，下载一次后离线可用）" />
+
+            <!-- Filled in code from ModelCatalog -->
+            <LinearLayout
+                android:id="@+id/modelList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/sonioxGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView style="@style/Label" android:text="Soniox API key" />
+
+            <EditText
+                android:id="@+id/sonioxKey"
+                style="@style/Field"
+                android:hint="在 console.soniox.com 创建"
+                android:inputType="textPassword" />
+
+            <TextView style="@style/Label" android:text="Soniox 模型" />
+
+            <EditText
+                android:id="@+id/sonioxModel"
+                style="@style/Field"
+                android:hint="stt-rt-v6"
+                android:inputType="text" />
+        </LinearLayout>
+
+        <!-- Translation -->
+        <TextView style="@style/Section" android:text="翻译" />
+
+        <TextView style="@style/Label" android:text="翻译成" />
+
+        <Spinner
+            android:id="@+id/targetLang"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView style="@style/Label" android:text="翻译服务" />
+
+        <RadioGroup
+            android:id="@+id/engine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/engineClaude"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Claude（Anthropic API）" />
+
+            <RadioButton
+                android:id="@+id/engineOai"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OpenAI 兼容接口（DeepSeek / OpenAI / Groq / 通义千问 …）" />
+
+            <RadioButton
+                android:id="@+id/engineNone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="不翻译（只显示原文）" />
+        </RadioGroup>
+
+        <LinearLayout
+            android:id="@+id/claudeGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView style="@style/Label" android:text="Claude API key" />
+
+            <EditText
+                android:id="@+id/claudeKey"
+                style="@style/Field"
+                android:hint="sk-ant-…"
+                android:inputType="textPassword" />
+
+            <TextView style="@style/Label" android:text="Claude 模型" />
+
+            <EditText
+                android:id="@+id/claudeModel"
+                style="@style/Field"
+                android:hint="claude-opus-5-5"
+                android:inputType="text" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/oaiGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView style="@style/Label" android:text="接口地址（Base URL）" />
+
+            <EditText
+                android:id="@+id/oaiBaseUrl"
+                style="@style/Field"
+                android:hint="https://api.deepseek.com"
+                android:inputType="textUri" />
+
+            <TextView style="@style/Label" android:text="API key" />
+
+            <EditText
+                android:id="@+id/oaiKey"
+                style="@style/Field"
+                android:hint="sk-…"
+                android:inputType="textPassword" />
+
+            <TextView style="@style/Label" android:text="模型名" />
+
+            <EditText
+                android:id="@+id/oaiModel"
+                style="@style/Field"
+                android:hint="deepseek-chat"
+                android:inputType="text" />
+        </LinearLayout>
+
+        <!-- Audio + display -->
+        <TextView style="@style/Section" android:text="音源与显示" />
+
+        <TextView style="@style/Label" android:text="音源" />
+
+        <RadioGroup
+            android:id="@+id/source"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/sourcePlayback"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/source_playback" />
+
+            <RadioButton
+                android:id="@+id/sourceMic"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/source_mic" />
+        </RadioGroup>
+
+        <CheckBox
+            android:id="@+id/showOriginal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="同时显示原文" />
+        <TextView style="@style/Label" android:text="同时显示几句字幕" />
+
+        <RadioGroup
+            android:id="@+id/lines"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/lines1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1 句" />
+
+            <RadioButton
+                android:id="@+id/lines2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2 句" />
+
+            <RadioButton
+                android:id="@+id/lines3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="3 句" />
+        </RadioGroup>
+
+        <TextView style="@style/Label" android:text="字幕保留秒数（0 = 一直保留到被新字幕替换）" />
+
+        <EditText
+            android:id="@+id/holdSeconds"
+            style="@style/Field"
+            android:hint="15"
+            android:inputType="number" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="翻译出来后，每句至少显示 4 秒；之后被新句子顶掉，或者超过保留秒数后消失。"
+            android:textSize="12sp" />
+
+        <!-- Actions -->
+        <Button
+            android:id="@+id/start"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="开始字幕" />
+
+        <Button
+            android:id="@+id/stop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="停止字幕" />
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textSize="13sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="使用：点“开始字幕” → 授权悬浮窗、录音、屏幕共享（选“整个屏幕”或播放视频的 App）→ 打开任意视频或直播播放。点按字幕框显示菜单（字号 / 原文开关 / 清空 / 关闭），上下拖动可移动位置。"
+            android:textSize="12sp" />
+    </LinearLayout>
+</ScrollView>

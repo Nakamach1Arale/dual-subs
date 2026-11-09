@@ -1,0 +1,20 @@
+# Gradle / Kotlin / Android build output
+.gradle/
+.kotlin/
+build/
+*.apk
+*.aab
+local.properties
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Downloaded at build time (see app/build.gradle.kts)
+app/libs/*.aar
+*.part
+
+# Speech models are downloaded by the app at runtime, never committed
+*.onnx
+!app/src/main/assets/silero_vad.onnx
