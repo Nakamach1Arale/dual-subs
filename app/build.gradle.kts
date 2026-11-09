@@ -25,8 +25,8 @@ android {
         applicationId = "io.github.dualsubs"
         minSdk = 29          // AudioPlaybackCapture needs Android 10+
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.3.0"
+        versionCode = 4
+        versionName = "0.3.1"
 
         // Phones only: keeps the native sherpa-onnx / onnxruntime libraries out of the APK for x86.
         ndk { abiFilters += setOf("arm64-v8a", "armeabi-v7a") }

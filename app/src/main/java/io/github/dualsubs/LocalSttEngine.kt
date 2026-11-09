@@ -81,9 +81,32 @@ class LocalSttEngine(
 
         val window = FloatArray(VAD_WINDOW)
         var filled = 0
-        val speech = FloatArrayBuilder()     // audio of the utterance currently in progress
+        val history = AudioHistory(HISTORY_SAMPLES)
+        var prevEnd = 0L        // absolute sample where the last emitted sentence ended
+        var liveStart = -1L     // absolute start of the sentence in progress, -1 = none
         var lastPreviewAt = 0L
         var lastPreview = ""
+
+        // Silero only confirms speech once the probability has stayed above the threshold
+        // for minSpeechDuration, and sherpa then starts the segment just ~26 ms before the
+        // first loud window. Soft onsets (か, さ, breathy starts) and short openers like
+        // 「あの、」 fall before that, so prepend up to PREROLL_SAMPLES from our own copy of
+        // the audio — never reaching back into the previous sentence.
+        fun withPreroll(start: Long, samples: FloatArray): FloatArray {
+            val end = start + samples.size
+            val from = maxOf(start - PREROLL_SAMPLES, prevEnd, history.oldest)
+            prevEnd = maxOf(prevEnd, end)
+            if (samples.isEmpty() || from >= start || end > history.total) return samples
+            // Our numbering must match the VAD's; if it ever doesn't, use its audio as before.
+            val aligned = history[start] == samples[0] &&
+                history[start + samples.size / 2] == samples[samples.size / 2] &&
+                history[end - 1] == samples[samples.size - 1]
+            if (!aligned) {
+                Log.w(TAG, "VAD segment not aligned with history; skipping pre-roll")
+                return samples
+            }
+            return history.copy(from, end)
+        }
 
         try {
             while (running) {
@@ -96,27 +119,36 @@ class LocalSttEngine(
                     pos += take
                     if (filled < VAD_WINDOW) break
 
-                    vad.acceptWaveform(window.copyOf())
+                    val w = window.copyOf()
+                    history.append(w)
+                    vad.acceptWaveform(w)
                     filled = 0
-                    if (vad.isSpeechDetected()) speech.append(window)
 
                     // Finished segments: decode and emit.
                     while (!vad.empty()) {
                         val seg = vad.front()
                         vad.pop()
-                        speech.clear()
+                        liveStart = -1
                         lastPreview = ""
-                        val text = decode(recognizer, seg.samples)
+                        val text = decode(recognizer, withPreroll(seg.start, seg.samples))
                         if (text.isNotBlank()) listener.onSegment(text)
                         else listener.onPartial("", "")
+                    }
+
+                    // A new sentence just started: begin where the final decode will begin.
+                    if (vad.isSpeechDetected() && liveStart < 0) {
+                        val vadStart = history.total - 2 * VAD_WINDOW - MIN_SPEECH_SAMPLES
+                        liveStart = maxOf(vadStart - PREROLL_SAMPLES, prevEnd, history.oldest)
                     }
                 }
 
                 // Live preview of the sentence that is still being spoken.
                 val now = SystemClock.elapsedRealtime()
-                if (speech.size >= MIN_PREVIEW_SAMPLES && now - lastPreviewAt >= PREVIEW_INTERVAL_MS) {
+                if (liveStart >= 0 && history.total - liveStart >= MIN_PREVIEW_SAMPLES &&
+                    now - lastPreviewAt >= PREVIEW_INTERVAL_MS
+                ) {
                     lastPreviewAt = now
-                    val text = decode(recognizer, speech.toArray())
+                    val text = decode(recognizer, history.copy(liveStart, history.total))
                     if (text != lastPreview) {
                         lastPreview = text
                         listener.onPartial("", text)
@@ -181,7 +213,7 @@ class LocalSttEngine(
             threshold = 0.5f,
             // Broadcast speech has short pauses; 0.4 s ends a sentence without cutting phrases.
             minSilenceDuration = 0.4f,
-            minSpeechDuration = 0.25f,
+            minSpeechDuration = MIN_SPEECH_SAMPLES.toFloat() / AudioCapture.SAMPLE_RATE,
             windowSize = VAD_WINDOW,
             // Force a cut in long monologues so subtitles never lag more than ~10 s.
             maxSpeechDuration = 10f,
@@ -190,20 +222,47 @@ class LocalSttEngine(
         numThreads = 1,
     )
 
-    /** Growable float buffer without boxing. */
-    private class FloatArrayBuilder {
-        private var data = FloatArray(16_000 * 4)
-        var size = 0
+    /**
+     * Ring buffer of the most recent audio fed to the VAD, addressed by absolute sample
+     * index (the same numbering as [com.k2fsa.sherpa.onnx.SpeechSegment.start]).
+     */
+    private class AudioHistory(private val capacity: Int) {
+        private val data = FloatArray(capacity)
+
+        /** Samples appended so far = absolute index of the next sample. */
+        var total = 0L
             private set
 
+        /** Oldest absolute index still held. */
+        val oldest: Long get() = maxOf(0L, total - capacity)
+
         fun append(src: FloatArray) {
-            if (size + src.size > data.size) data = data.copyOf(maxOf(data.size * 2, size + src.size))
-            System.arraycopy(src, 0, data, size, src.size)
-            size += src.size
+            var i = 0
+            while (i < src.size) {
+                val idx = ((total + i) % capacity).toInt()
+                val n = minOf(src.size - i, capacity - idx)
+                System.arraycopy(src, i, data, idx, n)
+                i += n
+            }
+            total += src.size
         }
 
-        fun clear() { size = 0 }
-        fun toArray(): FloatArray = data.copyOf(size)
+        operator fun get(pos: Long): Float = data[(pos % capacity).toInt()]
+
+        /** Samples [from, to), with [from] clamped to what is still held. */
+        fun copy(from: Long, to: Long): FloatArray {
+            val start = maxOf(from, oldest)
+            val n = (to - start).toInt().coerceAtLeast(0)
+            val out = FloatArray(n)
+            var i = 0
+            while (i < n) {
+                val idx = ((start + i) % capacity).toInt()
+                val len = minOf(n - i, capacity - idx)
+                System.arraycopy(data, idx, out, i, len)
+                i += len
+            }
+            return out
+        }
     }
 
     companion object {
@@ -212,5 +271,9 @@ class LocalSttEngine(
         private const val PREVIEW_INTERVAL_MS = 1000L
         private const val MIN_PREVIEW_SAMPLES = AudioCapture.SAMPLE_RATE // 1 s
         private const val MAX_BACKLOG_CHUNKS = 100                       // 10 s of audio
+        private const val MIN_SPEECH_SAMPLES = AudioCapture.SAMPLE_RATE / 4  // 0.25 s
+        /** Extra audio kept in front of each sentence so its first sounds aren't clipped. */
+        private const val PREROLL_SAMPLES = AudioCapture.SAMPLE_RATE * 2 / 5 // 0.4 s
+        private const val HISTORY_SAMPLES = AudioCapture.SAMPLE_RATE * 30    // 30 s
     }
 }
