@@ -95,7 +95,7 @@
 - **Android 10 (API 29)** 及以上的 ARM 架构设备。
 
 ### 使用步骤
-1. 安装并打开 APK。
+1. 前往 [Releases](https://github.com/Nakamach1Arale/dual-subs/releases) 下载最新 APK（或参考下方自行编译），安装并打开。
 2. **配置语音识别**：若使用本地离线模式，请选择一个模型并点击 **下载**（下载期间请保持 App 在前台运行）。
 3. **配置翻译服务**：选择翻译引擎并填入对应的 API Key，或选择「不翻译」。
 4. 点击 **开始字幕**，按系统提示依次授予必要权限：
@@ -121,13 +121,14 @@
 # Linux / macOS
 ./gradlew assembleDebug
 
-# Windows
+# Windows（调试版 / 发布版）
 build.cmd
+build.cmd release
 ```
 
 - **自动拉取依赖**：首次构建时，Gradle 会自动从 GitHub Releases 下载 `sherpa-onnx` 的 AAR 依赖并放置于 `app/libs/`。
 - **国内网络友好**：`settings.gradle.kts` 已配置优先使用阿里云 Maven 镜像（官方仓库兜底），中国大陆网络环境下可直接顺畅构建。
-- **产物路径**：编译生成的安装包位于 `app/build/outputs/apk/debug/app-debug.apk`。
+- **产物路径**：编译生成的安装包位于 `app/build/outputs/apk/debug/app-debug.apk`（`build.cmd release` 生成 `app/build/outputs/apk/release/app-release.apk`）。
 
 ---
 
@@ -145,6 +146,7 @@ build.cmd
 | 文件 | 职责说明 |
 | :--- | :--- |
 | `MainActivity.kt` | 主设置界面、模型下载管理、运行时权限与 MediaProjection 授权流程 |
+| `Prefs.kt` | 源语言/目标语言定义与全局设置持久化（SharedPreferences） |
 | `SubtitleService.kt` | 核心前台服务：串联音频采集、语音识别、LLM 翻译与悬浮窗渲染 |
 | `AudioCapture.kt` | 16 kHz 单声道 PCM 音频采集器（支持系统内录与麦克风外录双音源） |
 | `SttEngine.kt` | 语音识别引擎统一抽象接口 |
